@@ -1,94 +1,17 @@
 #![allow(dead_code)]
 
+mod heap;
+use crate::heap::Heap;
+
 fn main() {
     let mut heap: Heap<_> =
         vec![5, 10, 15, 3, 8, 21].into();
     heap.build_max_heap();
-    dbg!(&heap);
+    dbg!(&heap.height());
+    let heap: Heap<u32> = Heap::from(vec![]);
+    dbg!(&heap.height());
 }
 
-#[derive(Debug, Clone)]
-struct Heap<T: Ord + Clone + std::fmt::Debug> {
-    data: Vec<T>,
-}
-impl<T: Ord + Clone + std::fmt::Debug> From<Vec<T>>
-    for Heap<T>
-{
-    fn from(v: Vec<T>) -> Self {
-        let mut heap = Heap::new();
-        heap.data = v;
-        heap
-    }
-}
-impl<T: Ord + Clone + std::fmt::Debug> Heap<T> {
-    fn new() -> Self {
-        let data: Vec<T> = vec![];
-        Heap {
-            data,
-        }
-    }
-
-    fn size(&self) -> usize {
-        self.data
-            .len()
-    }
-
-    fn build_max_heap(&mut self) {
-        for idx in (0..self.size() / 2).rev() {
-            self.max_heapify(idx);
-        }
-    }
-
-    fn max_heapify(&mut self, idx: usize) {
-        println!(
-            "Current: {:?}\tIndex: {}",
-            self.data, idx
-        );
-        let left = 2 * idx + 1;
-        let right = 2 * idx + 2;
-        let mut largest = idx;
-        if left < self.size() && self[left] > self[largest]
-        {
-            largest = left;
-        }
-        if right < self.size()
-            && self[right] > self[largest]
-        {
-            largest = right;
-        }
-        if largest != idx {
-            (
-                self[idx],
-                self[largest],
-            ) = (
-                self[largest].clone(),
-                self[idx].clone(),
-            );
-            self.max_heapify(largest);
-        }
-    }
-}
-
-impl<T: Ord + Clone + std::fmt::Debug>
-    std::ops::Index<usize> for Heap<T>
-{
-    type Output = T;
-
-    fn index(&self, index: usize) -> &Self::Output {
-        &self.data[index]
-    }
-}
-
-impl<T: Ord + Clone + std::fmt::Debug>
-    std::ops::IndexMut<usize> for Heap<T>
-{
-    fn index_mut(
-        &mut self,
-        index: usize,
-    ) -> &mut Self::Output {
-        &mut self.data[index]
-    }
-}
 
 fn insertion_sort<T>(input: &mut [T])
 where
@@ -294,40 +217,5 @@ mod tests {
                 );
             }
         }
-    }
-
-    #[test]
-    fn build_max_heap_empty() {
-        let mut heap: Heap<i32> = vec![].into();
-        heap.build_max_heap();
-        assert_eq!(
-            heap.size(),
-            0
-        );
-    }
-
-    #[test]
-    fn build_max_heap_singleton() {
-        let mut heap: Heap<_> = vec![5].into();
-        heap.build_max_heap();
-        assert_eq!(
-            heap.size(),
-            1
-        );
-        assert_eq!(
-            heap[0],
-            5
-        );
-    }
-
-    #[test]
-    fn build_max_heap() {
-        let mut heap: Heap<_> =
-            vec![5, 10, 15, 3, 8, 21].into();
-        heap.build_max_heap();
-        assert_eq!(
-            heap[0],
-            21
-        );
     }
 }
