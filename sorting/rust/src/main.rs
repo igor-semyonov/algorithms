@@ -1,22 +1,21 @@
-#![allow(dead_code)]
+#![allow(
+    dead_code,
+    unused_imports
+)]
 
 mod heap;
-use crate::heap::Heap;
+use crate::heap::{Heap, build_max_heap, max_heapify};
 
 fn main() {
-    let mut heap: Heap<_> =
-        vec![5, 10, 15, 3, 8, 21].into();
-    heap.build_max_heap();
-    dbg!(&heap.height());
-    let heap: Heap<u32> = Heap::from(vec![]);
-    dbg!(&heap.height());
+    let mut v = vec![8, 11, 3, 1, 5];
+    heap_sort(&mut v);
+    println!(
+        "{:?}",
+        v
+    );
 }
 
-
-fn insertion_sort<T>(input: &mut [T])
-where
-    T: std::fmt::Debug + Ord + Clone,
-{
+fn insertion_sort<T: Ord + Clone>(input: &mut [T]) {
     for i in 1..input.len() {
         for j in (1..=i).rev() {
             if input[j] < input[j - 1] {
@@ -28,10 +27,7 @@ where
     }
 }
 
-fn merge_sort<T>(input: &mut [T])
-where
-    T: std::fmt::Debug + Ord + Clone,
-{
+fn merge_sort<T: Ord + Clone>(input: &mut [T]) {
     let input_len = input.len();
     let input_ptr = input.as_mut_ptr();
     if input_len <= 1 {
@@ -74,6 +70,22 @@ where
     }
 }
 
+fn heap_sort<T: Ord + Clone>(input: &mut [T]) {
+    build_max_heap(input);
+    for idx in (1..input.len()).rev() {
+        (
+            input[0], input[idx],
+        ) = (
+            input[idx].clone(),
+            input[0].clone(),
+        );
+        let (subslice, _) = input.split_at_mut(idx);
+        max_heapify(
+            subslice, 0,
+        );
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -95,6 +107,10 @@ mod tests {
         sorting_functions.insert(
             String::from("merge_sort"),
             merge_sort,
+        );
+        sorting_functions.insert(
+            String::from("heap_sort"),
+            heap_sort,
         );
         sorting_functions
     }

@@ -1,3 +1,38 @@
+pub fn build_max_heap<T: Ord + Clone>(input: &mut [T]) {
+    for idx in (0..input.len() >> 1).rev() {
+        max_heapify(
+            input, idx,
+        );
+    }
+}
+pub fn max_heapify<T: Ord + Clone>(
+    input: &mut [T],
+    idx: usize,
+) {
+    let left = (idx << 1) + 1;
+    let right = left + 1;
+    let mut largest = idx;
+    if left < input.len() && input[left] > input[largest] {
+        largest = left;
+    }
+    if right < input.len() && input[right] > input[largest]
+    {
+        largest = right;
+    }
+    if largest != idx {
+        (
+            input[idx],
+            input[largest],
+        ) = (
+            input[largest].clone(),
+            input[idx].clone(),
+        );
+        max_heapify(
+            input, largest,
+        );
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Heap<T: Ord + Clone + std::fmt::Debug> {
     data: Vec<T>,
@@ -42,40 +77,24 @@ impl<T: Ord + Clone + std::fmt::Debug> Heap<T> {
     /// Apply [`Heap::max_heapify`] until the heap has been
     /// fully transformed to a max heap.
     pub fn build_max_heap(&mut self) {
-        for idx in (0..self.size() / 2).rev() {
-            self.max_heapify(idx);
-        }
+        build_max_heap(
+            self.data
+                .as_mut_slice(),
+        );
     }
 
-    /// Apply a max-heapify algorithm recursively starting
+    /// Apply [`max_heapify`] starting
     /// at a given index of the underlying array.
     fn max_heapify(&mut self, idx: usize) {
         // println!(
         //     "Current: {:?}\tIndex: {}",
         //     self.data, idx
         // );
-        let left = 2 * idx + 1;
-        let right = 2 * idx + 2;
-        let mut largest = idx;
-        if left < self.size() && self[left] > self[largest]
-        {
-            largest = left;
-        }
-        if right < self.size()
-            && self[right] > self[largest]
-        {
-            largest = right;
-        }
-        if largest != idx {
-            (
-                self[idx],
-                self[largest],
-            ) = (
-                self[largest].clone(),
-                self[idx].clone(),
-            );
-            self.max_heapify(largest);
-        }
+        max_heapify(
+            self.data
+                .as_mut_slice(),
+            idx,
+        );
     }
 
     /// Add an item to the heap then reapply
