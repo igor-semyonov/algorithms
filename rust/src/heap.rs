@@ -32,6 +32,21 @@ pub fn max_heapify<T: Ord + Clone>(
         );
     }
 }
+fn get_parent_idx(idx: usize) -> usize {
+    (idx + 1 >> 1) - 1
+}
+fn get_children_idx(
+    idx: usize,
+) -> (
+    usize,
+    usize,
+) {
+    let child1_idx = (idx + 1 << 1) - 1;
+    let child2_idx = child1_idx + 1;
+    (
+        child1_idx, child2_idx,
+    )
+}
 
 #[derive(Debug, Clone)]
 pub struct Heap<T: Ord + Clone + std::fmt::Debug> {
@@ -48,7 +63,7 @@ impl<T: Ord + Clone + std::fmt::Debug> From<Vec<T>>
 }
 impl<T: Ord + Clone + std::fmt::Debug> Heap<T> {
     /// Make a new heap.
-    fn new() -> Self {
+    pub fn new() -> Self {
         let data: Vec<T> = vec![];
         Heap {
             data,
@@ -97,12 +112,120 @@ impl<T: Ord + Clone + std::fmt::Debug> Heap<T> {
         );
     }
 
-    /// Add an item to the heap then reapply
-    /// [`Heap::build_max_heap`].
-    fn push(&mut self, value: T) {
+    /// Push an item to the heap then sift it up.
+    pub fn push(&mut self, value: T) {
         self.data
             .push(value);
-        self.build_max_heap();
+        let mut node_idx = self.size() - 1;
+        loop {
+            if node_idx == 0 {
+                break;
+            }
+            let parent_idx = get_parent_idx(node_idx);
+            if self[parent_idx] < self[node_idx] {
+                (
+                    self[node_idx],
+                    self[parent_idx],
+                ) = (
+                    self[parent_idx].clone(),
+                    self[node_idx].clone(),
+                );
+                node_idx = parent_idx;
+            } else {
+                break;
+            }
+        }
+    }
+
+    /// Pop the max value and then sift down to maintain the
+    /// heap.
+    pub fn pop(&mut self) -> Option<T> {
+        if self.size() == 0 {
+            return None;
+        }
+        let size = self.size();
+        let last_idx = size - 1;
+        let new_size = last_idx;
+        (
+            self[0],
+            self[last_idx],
+        ) = (
+            self[last_idx].clone(),
+            self[0].clone(),
+        );
+        let mut node_idx = 0;
+        while node_idx < new_size {
+            let (child1_idx, child2_idx) =
+                get_children_idx(node_idx);
+            if child1_idx >= new_size {
+                break;
+            } else if child2_idx >= new_size {
+                if self[node_idx] < self[child1_idx] {
+                    (
+                        self[node_idx],
+                        self[child1_idx],
+                    ) = (
+                        self[child1_idx].clone(),
+                        self[node_idx].clone(),
+                    );
+                }
+                break;
+            } else {
+                let (max_child_idx, max_child_value) =
+                    match self[child1_idx]
+                        >= self[child2_idx]
+                    {
+                        true => (
+                            child1_idx,
+                            self[child1_idx].clone(),
+                        ),
+                        false => (
+                            child2_idx,
+                            self[child2_idx].clone(),
+                        ),
+                    };
+                if self[node_idx] < max_child_value {
+                    (
+                        self[node_idx],
+                        self[max_child_idx],
+                    ) = (
+                        max_child_value,
+                        self[node_idx].clone(),
+                    );
+                    node_idx = max_child_idx;
+                } else {
+                    break;
+                }
+            }
+        }
+        self.data
+            .pop()
+    }
+
+    pub fn peak(&self) -> Option<&T> {
+        self.data
+            .first()
+    }
+
+    /// Check that the heap satisfies the property that each
+    /// element is less than or equal to its parent
+    pub fn is_valid(&self) -> bool {
+        for node_idx in 1..self.size() {
+            let node_value = &self[node_idx];
+            let parent_idx = get_parent_idx(node_idx);
+            let parent_value = &self[parent_idx];
+            if node_value > parent_value {
+                eprintln!(
+                    "Invalid binary heap!\n   Node index {:4} has value {:5?}\n Parent index {:4} has value {:5?}",
+                    node_idx,
+                    node_value,
+                    parent_idx,
+                    parent_value
+                );
+                return false;
+            }
+        }
+        true
     }
 }
 
@@ -179,6 +302,39 @@ mod tests {
             2
         );
         heap.push(1);
+    }
+
+    #[test]
+    fn pushing_popping_and_peaking() {
+        let mut heap: Heap<i32> = Heap::new();
+        assert!(heap.is_valid());
+        for _v in vec![5, 3, 8, 11] {
+            assert!(heap.is_valid());
+            assert!(
+                heap.peak()
+                    == heap
+                        .data
+                        .iter()
+                        .max()
+            )
+        }
+        while let Some(val) = heap.pop() {
+            let peaked = heap
+                .peak()
+                .unwrap()
+                .clone();
+            let max = heap
+                .data
+                .iter()
+                .max()
+                .unwrap()
+                .clone();
+            assert!(heap.is_valid());
+            assert!(max <= val);
+            assert!(peaked == max);
+        }
+        assert!(heap.is_valid());
+        assert!(heap.peak().is_none());
     }
 
     #[test]
