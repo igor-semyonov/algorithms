@@ -1,5 +1,5 @@
 {
-  description = "Flake for NumRS2 devShell";
+  description = "Flake for rust algorithms";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
