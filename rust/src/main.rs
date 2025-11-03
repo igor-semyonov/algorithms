@@ -8,11 +8,8 @@ use crate::heap::{Heap, build_max_heap, max_heapify};
 
 fn main() {
     let mut v = vec![8, 11, 3, 1, 5];
-    heap_sort(&mut v);
-    println!(
-        "{:?}",
-        v
-    );
+    quick_sort(&mut v);
+    println!("{:?}", v);
 }
 
 fn insertion_sort<T: Ord + Clone>(input: &mut [T]) {
@@ -86,6 +83,47 @@ fn heap_sort<T: Ord + Clone>(input: &mut [T]) {
     }
 }
 
+fn quick_sort<T: Ord + Clone>(input: &mut [T]) {
+    if input.len() >= 2 {
+        let pivot_idx = quick_sort_partition(input);
+        let (lower_half, tmp) = input.split_at_mut(pivot_idx);
+        let (_, upper_half) = tmp.split_at_mut(1);
+        quick_sort(lower_half);
+        quick_sort(upper_half);
+    }
+}
+
+fn quick_sort_partition<T: Ord + Clone>(
+    input: &mut [T],
+) -> usize {
+    let old_pivot_idx = input.len() - 1;
+    let pivot = input[old_pivot_idx].clone();
+    let mut new_pivot_idx = 0;
+    for idx in 0..input.len() {
+        let value = input[idx].clone();
+        if value < pivot {
+            if idx != 0 {
+                (
+                    input[new_pivot_idx],
+                    input[idx],
+                ) = (
+                    value,
+                    input[new_pivot_idx].clone(),
+                );
+            }
+            new_pivot_idx += 1;
+        }
+    }
+    (
+        input[old_pivot_idx],
+        input[new_pivot_idx],
+    ) = (
+        input[new_pivot_idx].clone(),
+        pivot,
+    );
+    new_pivot_idx
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -111,6 +149,10 @@ mod tests {
         sorting_functions.insert(
             String::from("heap_sort"),
             heap_sort,
+        );
+        sorting_functions.insert(
+            String::from("quick_sort"),
+            quick_sort,
         );
         sorting_functions
     }
