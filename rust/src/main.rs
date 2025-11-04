@@ -9,7 +9,10 @@ use crate::heap::{Heap, build_max_heap, max_heapify};
 fn main() {
     let mut v = vec![8, 11, 3, 1, 5];
     quick_sort(&mut v);
-    println!("{:?}", v);
+    println!(
+        "{:?}",
+        v
+    );
 }
 
 fn insertion_sort<T: Ord + Clone>(input: &mut [T]) {
@@ -86,7 +89,8 @@ fn heap_sort<T: Ord + Clone>(input: &mut [T]) {
 fn quick_sort<T: Ord + Clone>(input: &mut [T]) {
     if input.len() >= 2 {
         let pivot_idx = quick_sort_partition(input);
-        let (lower_half, tmp) = input.split_at_mut(pivot_idx);
+        let (lower_half, tmp) =
+            input.split_at_mut(pivot_idx);
         let (_, upper_half) = tmp.split_at_mut(1);
         quick_sort(lower_half);
         quick_sort(upper_half);
@@ -127,153 +131,74 @@ fn quick_sort_partition<T: Ord + Clone>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashMap;
-
-    fn get_sorting_functions<T>()
-    -> HashMap<String, fn(&mut [T])>
-    where
-        T: std::fmt::Debug + Ord + Clone,
-    {
-        let mut sorting_functions: HashMap<
-            _,
-            fn(&mut [T]),
-        > = HashMap::new();
-        sorting_functions.insert(
-            String::from("insertion_sort"),
-            insertion_sort,
-        );
-        sorting_functions.insert(
-            String::from("merge_sort"),
-            merge_sort,
-        );
-        sorting_functions.insert(
-            String::from("heap_sort"),
-            heap_sort,
-        );
-        sorting_functions.insert(
-            String::from("quick_sort"),
-            quick_sort,
-        );
-        sorting_functions
+    use paste::paste;
+    macro_rules! create_sorting_tests {
+        ($($test_name:ident: $sorting_function:path,)*) => {
+        paste! {
+                $(
+    #[test]
+    fn [<$test_name _empty_list>]() {
+        let mut array: Vec<u8> = vec![];
+        $sorting_function(&mut array);
+        assert!(array.len() == 0);
     }
 
     #[test]
-    fn empty_list() {
-        let sorting_functions = get_sorting_functions();
-        for (sorting_function_name, sorting_function) in
-            sorting_functions
-        {
-            let mut array: Vec<u8> = vec![];
-            sorting_function(&mut array);
-            println!(
-                "Testing {}.",
-                &sorting_function_name
-            );
-            assert!(array.len() == 0);
-            println!(
-                "Finished {}.",
-                &sorting_function_name
-            );
-        }
+    fn [<$test_name _singleton_list>]() {
+        let mut array: Vec<u8> = vec![0];
+        $sorting_function(&mut array);
+        assert!(array.len() == 1);
+        assert!(array[0] == 0);
     }
 
     #[test]
-    fn singleton_list() {
-        let sorting_functions = get_sorting_functions();
-        for (sorting_function_name, sorting_function) in
-            sorting_functions
-        {
-            let mut array: Vec<u8> = vec![0];
-            sorting_function(&mut array);
-            println!(
-                "Testing {}.",
-                &sorting_function_name
-            );
-            assert!(array.len() == 1);
-            assert!(array[0] == 0);
-            println!(
-                "Finished {}.",
-                &sorting_function_name
-            );
-        }
+    fn [<$test_name _basec_list>]() {
+        let mut array: Vec<u8> = vec![8, 3, 11, 2, 15];
+        $sorting_function(&mut array);
+        assert_eq!(
+            &array,
+            &[2, 3, 8, 11, 15]
+        );
     }
 
     #[test]
-    fn basic_list() {
-        let sorting_functions = get_sorting_functions();
-        for (sorting_function_name, sorting_function) in
-            sorting_functions
-        {
-            let mut array: Vec<u8> = vec![8, 3, 11, 2, 15];
-            sorting_function(&mut array);
-            println!(
-                "Testing {}.",
-                &sorting_function_name
-            );
+    fn [<$test_name _inverted>]() {
+        for upper_bound in [1_000, 1_001] {
+            let mut array: Vec<u32> = (0..upper_bound)
+                .rev()
+                .collect();
+            let mut correct = array.clone();
+            correct.sort();
+            $sorting_function(&mut array);
             assert_eq!(
                 &array,
-                &[2, 3, 8, 11, 15]
-            );
-            println!(
-                "Finished {}.",
-                &sorting_function_name
+                &correct
             );
         }
     }
 
-    #[test]
-    fn inverted() {
-        let sorting_functions = get_sorting_functions();
+                    #[test]
+    fn [<$test_name _already_sorted>]() {
         for upper_bound in [1_000, 1_001] {
-            for (sorting_function_name, sorting_function) in
-                &sorting_functions
-            {
-                let mut array: Vec<u32> = (0..upper_bound)
-                    .rev()
-                    .collect();
-                let mut correct = array.clone();
-                correct.sort();
-                sorting_function(&mut array);
-                println!(
-                    "Testing {}.",
-                    &sorting_function_name
-                );
-                assert_eq!(
-                    &array,
-                    &correct
-                );
-                println!(
-                    "Finished {}.",
-                    &sorting_function_name
-                );
+            let mut array: Vec<u32> =
+                (0..upper_bound).collect();
+            let correct = array.clone();
+            $sorting_function(&mut array);
+            assert_eq!(
+                &array,
+                &correct
+            );
+        }
+    }
+                )*
             }
         }
     }
 
-    #[test]
-    fn already_sorted() {
-        let sorting_functions = get_sorting_functions();
-        for upper_bound in [1_000, 1_001] {
-            for (sorting_function_name, sorting_function) in
-                &sorting_functions
-            {
-                let mut array: Vec<u32> =
-                    (0..upper_bound).collect();
-                let correct = array.clone();
-                sorting_function(&mut array);
-                println!(
-                    "Testing {}.",
-                    &sorting_function_name
-                );
-                assert_eq!(
-                    &array,
-                    &correct
-                );
-                println!(
-                    "Finished {}.",
-                    &sorting_function_name
-                );
-            }
-        }
-    }
+    create_sorting_tests![
+        insertion_sort: insertion_sort,
+        merge_sort: merge_sort,
+        heap_sort: heap_sort,
+        quick_sort: quick_sort,
+    ];
 }
